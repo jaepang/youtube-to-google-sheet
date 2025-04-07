@@ -41,7 +41,9 @@ export async function POST(request: Request) {
 
     // 이메일-이름 매핑에서 이름 찾기
     const emailToNameMapping = getEmailToNameMapping();
+    console.log(emailToNameMapping);
     const userName = emailToNameMapping[userEmail] || userEmail.split('@')[0];
+    console.log(userName);
 
     const oauth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
