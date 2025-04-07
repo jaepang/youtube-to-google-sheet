@@ -3,7 +3,7 @@ import { youtube } from '@googleapis/youtube';
 import { sheets } from '@googleapis/sheets';
 import { getServerSession } from 'next-auth';
 import { OAuth2Client } from 'google-auth-library';
-import { authOptions } from '../auth/[...nextauth]/route';
+import { authOptions } from '../auth/auth.config';
 
 // API 키 확인
 if (!process.env.GOOGLE_API_KEY) {
