@@ -6,10 +6,6 @@ import { OAuth2Client } from 'google-auth-library';
 import { authOptions } from '../auth/auth.config';
 
 // API 키 확인
-if (!process.env.GOOGLE_API_KEY) {
-  console.error('GOOGLE_API_KEY가 설정되지 않았습니다.');
-}
-
 if (!process.env.SPREADSHEET_ID) {
   console.error('SPREADSHEET_ID가 설정되지 않았습니다.');
 }
