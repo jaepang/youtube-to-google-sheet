@@ -80,6 +80,14 @@ export default function Home() {
             </button>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              <a
+                href="https://docs.google.com/spreadsheets/d/14N1avb79X8t36Lvy-mEqYo1hx9NaE1AJpI5XeHr5sgg/edit?gid=0#gid=0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-center mb-4"
+              >
+                선곡 시트 보러가기
+              </a>
               <div>
                 <label htmlFor="url" className="block text-sm font-medium text-gray-700 mb-1">
                   유튜브 URL
