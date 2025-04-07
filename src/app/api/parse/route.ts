@@ -14,6 +14,18 @@ if (!process.env.SPREADSHEET_ID) {
   console.error('SPREADSHEET_ID가 설정되지 않았습니다.');
 }
 
+// 이메일-이름 매핑 파싱 함수
+function getEmailToNameMapping(): Record<string, string> {
+  try {
+    const mappingStr = process.env.EMAIL_TO_NAME_MAPPING;
+    if (!mappingStr) return {};
+    return JSON.parse(mappingStr);
+  } catch (error) {
+    console.error('이메일-이름 매핑 파싱 에러:', error);
+    return {};
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -26,7 +38,10 @@ export async function POST(request: Request) {
     if (!userEmail) {
       return NextResponse.json({ error: '사용자 이메일을 찾을 수 없습니다.' }, { status: 400 });
     }
-    const userId = userEmail.split('@')[0];
+
+    // 이메일-이름 매핑에서 이름 찾기
+    const emailToNameMapping = getEmailToNameMapping();
+    const userName = emailToNameMapping[userEmail] || userEmail.split('@')[0];
 
     const oauth2Client = new OAuth2Client(
       process.env.GOOGLE_CLIENT_ID,
@@ -152,7 +167,7 @@ export async function POST(request: Request) {
           valueInputOption: 'USER_ENTERED',
           requestBody: {
             values: [[
-              userId,
+              userName,  // 매핑된 이름 또는 이메일 아이디 사용
               channelTitle,
               title,
               `=HYPERLINK("${url}"; "URL")`
@@ -168,7 +183,7 @@ export async function POST(request: Request) {
             title,
             channelTitle,
             url,
-            userId
+            userName
           },
         });
       } catch (sheetError: any) {
