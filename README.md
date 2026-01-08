@@ -38,7 +38,7 @@ GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 NEXTAUTH_URL=http://localhost:3000
 NEXTAUTH_SECRET=your_nextauth_secret
-GOOGLE_SHEETS_ID=your_google_sheets_id
+SHEETS_ID=your_google_sheets_id
 ```
 
 4. 개발 서버 실행
