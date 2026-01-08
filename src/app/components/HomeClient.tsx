@@ -3,18 +3,31 @@
 import { useState } from 'react';
 import { FaYoutube } from 'react-icons/fa';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import EditModal from './EditModal';
 
 interface Props {
   spreadsheetUrl: string;
 }
 
+interface ParsedData {
+  artist: string;
+  title: string;
+  url: string;
+}
+
 export default function HomeClient({ spreadsheetUrl }: Props) {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [url, setUrl] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  
+  // 모달 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [parsedData, setParsedData] = useState<ParsedData | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // YouTube URL에서 정보 가져오기
+  const handleFetch = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!session) {
@@ -41,19 +54,71 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
       }
 
       if (data.success) {
-        alert(`파싱 결과:\n\n아티스트: ${data.data.channelTitle}\n곡명: ${data.data.title}\n\n구글 시트에 성공적으로 추가되었습니다!`);
+        setParsedData({
+          artist: data.data.artist,
+          title: data.data.title,
+          url: data.data.url,
+        });
+        setIsModalOpen(true);
+      } else {
+        throw new Error(data.error || '알 수 없는 오류가 발생했습니다.');
+      }
+    } catch (err) {
+      console.error('에러 상세:', err);
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 편집된 정보를 시트에 저장
+  const handleSave = async (editedData: { artist: string; title: string }) => {
+    if (!parsedData) return;
+
+    setSaving(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          artist: editedData.artist,
+          title: editedData.title,
+          url: parsedData.url,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || '알 수 없는 오류가 발생했습니다.');
+      }
+
+      if (data.success) {
+        alert(`구글 시트에 성공적으로 추가되었습니다!\n\n아티스트: ${editedData.artist}\n곡명: ${editedData.title}`);
+        setIsModalOpen(false);
+        setParsedData(null);
         setUrl('');
       } else {
         throw new Error(data.error || '알 수 없는 오류가 발생했습니다.');
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('에러 상세:', err);
-      const errorMessage = err.message || '알 수 없는 오류가 발생했습니다.';
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다.';
       setError(errorMessage);
-      alert(`오류 발생:\n\n${errorMessage}\n\n자세한 내용은 개발자 도구의 콘솔을 확인해주세요.`);
+      alert(`오류 발생:\n\n${errorMessage}`);
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setParsedData(null);
   };
 
   return (
@@ -83,7 +148,7 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
               Google 계정으로 로그인
             </button>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleFetch} className="space-y-4">
               <a
                 href={spreadsheetUrl}
                 target="_blank"
@@ -118,13 +183,23 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
                 disabled={loading}
                 className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? '처리 중...' : '구글 시트에 추가'}
+                {loading ? '정보 가져오는 중...' : '정보 가져오기'}
               </button>
             </form>
           )}
         </div>
       </div>
+
+      {/* 편집 모달 */}
+      {parsedData && (
+        <EditModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={handleSave}
+          initialData={parsedData}
+          loading={saving}
+        />
+      )}
     </main>
   );
 }
-
