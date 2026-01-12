@@ -7,7 +7,25 @@ interface LeaderboardItem {
   artist: string;
   title: string;
   youtubeUrl: string;
+  rating: string;
+  originalRow: number;
   sheetName: string;
+}
+
+// 평가 옵션 정의
+const RATING_OPTIONS = [
+  { value: '유잼', label: '유잼', bgClass: 'bg-green-100', textClass: 'text-green-700', hoverClass: 'hover:bg-green-200' },
+  { value: '가능', label: '가능', bgClass: 'bg-yellow-100', textClass: 'text-yellow-700', hoverClass: 'hover:bg-yellow-200' },
+  { value: '노잼', label: '노잼', bgClass: 'bg-red-100', textClass: 'text-red-700', hoverClass: 'hover:bg-red-200' },
+  { value: '불가', label: '불가', bgClass: 'bg-red-600', textClass: 'text-red-100', hoverClass: 'hover:bg-red-700' },
+  { value: '불참', label: '불참', bgClass: 'bg-gray-200', textClass: 'text-gray-900', hoverClass: 'hover:bg-gray-300' },
+] as const;
+
+// 평가 값에 따른 뱃지 스타일 반환
+function getRatingStyle(rating: string) {
+  const option = RATING_OPTIONS.find(opt => opt.value === rating);
+  if (!option) return null;
+  return { bgClass: option.bgClass, textClass: option.textClass };
 }
 
 // YouTube URL을 임베드 URL로 변환
@@ -34,6 +52,7 @@ export default function LeaderboardSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedItem, setSelectedItem] = useState<LeaderboardItem | null>(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
 
   const handleAuthError = async (errorCode?: string) => {
     if (errorCode === 'TOKEN_EXPIRED' || errorCode === 'AUTH_REQUIRED') {
@@ -50,48 +69,91 @@ export default function LeaderboardSection() {
     return false;
   };
 
-  useEffect(() => {
-    const fetchLeaderboard = async () => {
-      if (!session) return;
+  const fetchLeaderboard = async () => {
+    if (!session) return;
 
-      setLoading(true);
-      setError('');
+    setLoading(true);
+    setError('');
 
-      try {
-        const response = await fetch('/api/leaderboard');
-        const result = await response.json();
+    try {
+      const response = await fetch('/api/leaderboard');
+      const result = await response.json();
 
-        if (!response.ok) {
-          if (await handleAuthError(result.code)) {
-            return;
-          }
-          throw new Error(result.error || '데이터를 불러올 수 없습니다.');
+      if (!response.ok) {
+        if (await handleAuthError(result.code)) {
+          return;
         }
-
-        if (result.success) {
-          setData(result.data);
-        } else {
-          throw new Error(result.error || '알 수 없는 오류가 발생했습니다.');
-        }
-      } catch (err) {
-        console.error('리더보드 에러:', err);
-        setError(err instanceof Error ? err.message : '데이터를 불러올 수 없습니다.');
-      } finally {
-        setLoading(false);
+        throw new Error(result.error || '데이터를 불러올 수 없습니다.');
       }
-    };
 
+      if (result.success) {
+        setData(result.data);
+      } else {
+        throw new Error(result.error || '알 수 없는 오류가 발생했습니다.');
+      }
+    } catch (err) {
+      console.error('리더보드 에러:', err);
+      setError(err instanceof Error ? err.message : '데이터를 불러올 수 없습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLeaderboard();
   }, [session]);
 
   const handleItemClick = (item: LeaderboardItem) => {
-    if (item.youtubeUrl) {
-      setSelectedItem(item);
-    }
+    setSelectedItem(item);
   };
 
   const closeModal = () => {
     setSelectedItem(null);
+  };
+
+  const handleRating = async (rating: string) => {
+    if (!selectedItem || !selectedItem.originalRow) return;
+
+    setRatingLoading(true);
+
+    try {
+      const response = await fetch('/api/rate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          originalRow: selectedItem.originalRow,
+          rating,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (await handleAuthError(result.code)) {
+          closeModal();
+          return;
+        }
+        throw new Error(result.error || '평가 저장에 실패했습니다.');
+      }
+
+      if (result.success) {
+        // 로컬 상태 업데이트
+        setData(prev => prev.map(item => 
+          item.originalRow === selectedItem.originalRow 
+            ? { ...item, rating } 
+            : item
+        ));
+        // 선택된 항목도 업데이트
+        setSelectedItem(prev => prev ? { ...prev, rating } : null);
+      }
+    } catch (err) {
+      console.error('평가 에러:', err);
+      alert(err instanceof Error ? err.message : '평가 저장에 실패했습니다.');
+    } finally {
+      setRatingLoading(false);
+    }
   };
 
   if (loading) {
@@ -134,27 +196,39 @@ export default function LeaderboardSection() {
       <div className="bg-white rounded-2xl shadow-sm p-6 mt-4 flex-1 flex flex-col min-h-0">
         <h2 className="text-lg font-bold text-gray-900 mb-4">🏆 리더보드</h2>
         <div className="space-y-2 overflow-y-auto flex-1">
-          {data.map((item, index) => (
-            <div
-              key={`${item.sheetName}-${index}`}
-              onClick={() => handleItemClick(item)}
-              className={`flex items-center gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${
-                item.youtubeUrl ? 'cursor-pointer' : ''
-              }`}
-            >
-              <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
-                {index + 1}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  {item.title || '(제목 없음)'}
-                </p>
-                <p className="text-xs text-gray-500 truncate">
-                  {item.artist || '(아티스트 없음)'}
-                </p>
+          {data.map((item, index) => {
+            const ratingStyle = getRatingStyle(item.rating);
+            const isUnrated = !item.rating;
+            
+            return (
+              <div
+                key={`${item.sheetName}-${index}`}
+                onClick={() => handleItemClick(item)}
+                className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                  isUnrated 
+                    ? 'bg-amber-50 hover:bg-amber-100 border border-amber-200' 
+                    : 'bg-gray-50 hover:bg-gray-100'
+                }`}
+              >
+                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
+                  {index + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {item.title || '(제목 없음)'}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate">
+                    {item.artist || '(아티스트 없음)'}
+                  </p>
+                </div>
+                {ratingStyle && (
+                  <span className={`flex-shrink-0 px-2 py-1 rounded text-xs font-medium ${ratingStyle.bgClass} ${ratingStyle.textClass}`}>
+                    {item.rating}
+                  </span>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -192,6 +266,31 @@ export default function LeaderboardSection() {
                 <div className="w-full h-full flex items-center justify-center text-white">
                   유효하지 않은 YouTube URL입니다.
                 </div>
+              )}
+            </div>
+            
+            {/* 평가 버튼 */}
+            <div className="p-4 border-t">
+              <div className="flex flex-wrap gap-2 justify-center">
+                {RATING_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleRating(option.value)}
+                    disabled={ratingLoading}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${option.bgClass} ${option.textClass} ${option.hoverClass} ${
+                      selectedItem.rating === option.value 
+                        ? 'ring-2 ring-offset-2 ring-blue-500' 
+                        : ''
+                    } ${ratingLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              {selectedItem.rating && (
+                <p className="text-center text-sm text-gray-500 mt-3">
+                  현재 평가: <span className="font-medium">{selectedItem.rating}</span>
+                </p>
               )}
             </div>
           </div>
