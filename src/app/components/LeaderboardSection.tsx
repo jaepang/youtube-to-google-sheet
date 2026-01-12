@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 
 interface LeaderboardItem {
@@ -54,6 +54,19 @@ export default function LeaderboardSection() {
   const [selectedItem, setSelectedItem] = useState<LeaderboardItem | null>(null);
   const [ratingLoading, setRatingLoading] = useState(false);
   const [ratingChanged, setRatingChanged] = useState(false);
+  const [activeTab, setActiveTab] = useState<'popular' | 'listen'>('popular');
+
+  // 들어보기 탭: 미평가 곡 우선 정렬
+  const sortedData = useMemo(() => {
+    if (activeTab === 'listen') {
+      return [...data].sort((a, b) => {
+        const aUnrated = !a.rating ? 0 : 1;
+        const bUnrated = !b.rating ? 0 : 1;
+        return aUnrated - bUnrated;
+      });
+    }
+    return data;
+  }, [data, activeTab]);
 
   const handleAuthError = async (errorCode?: string) => {
     if (errorCode === 'TOKEN_EXPIRED' || errorCode === 'AUTH_REQUIRED') {
@@ -202,15 +215,39 @@ export default function LeaderboardSection() {
   return (
     <>
       <div className="bg-white rounded-2xl shadow-sm p-6 mt-4 flex-1 flex flex-col min-h-0">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">🏆 리더보드</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-bold text-gray-900">🏆 리더보드</h2>
+          <div className="flex gap-1 text-sm">
+            <button
+              onClick={() => setActiveTab('popular')}
+              className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                activeTab === 'popular'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              인기순
+            </button>
+            <button
+              onClick={() => setActiveTab('listen')}
+              className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+                activeTab === 'listen'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              들어보기
+            </button>
+          </div>
+        </div>
         <div className="space-y-2 overflow-y-auto flex-1">
-          {data.map((item, index) => {
+          {sortedData.map((item, index) => {
             const ratingStyle = getRatingStyle(item.rating);
             const isUnrated = !item.rating;
             
             return (
               <div
-                key={`${item.sheetName}-${index}`}
+                key={`${item.sheetName}-${item.originalRow}`}
                 onClick={() => handleItemClick(item)}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
                   isUnrated 
@@ -218,9 +255,6 @@ export default function LeaderboardSection() {
                     : 'bg-gray-50 hover:bg-gray-100'
                 }`}
               >
-                <span className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
-                  {index + 1}
-                </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {item.title || '(제목 없음)'}
