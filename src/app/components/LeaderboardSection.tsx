@@ -56,6 +56,7 @@ export default function LeaderboardSection() {
   const [ratingChanged, setRatingChanged] = useState(false);
   const [activeTab, setActiveTab] = useState<'popular' | 'listen'>('popular');
   const [refreshing, setRefreshing] = useState(false);
+  const [playlistId, setPlaylistId] = useState<string | null>(null);
 
   // 들어보기 탭: 미평가 곡 우선 정렬
   const sortedData = useMemo(() => {
@@ -103,6 +104,9 @@ export default function LeaderboardSection() {
 
       if (result.success) {
         setData(result.data);
+        if (result.playlistId) {
+          setPlaylistId(result.playlistId);
+        }
       } else {
         throw new Error(result.error || '알 수 없는 오류가 발생했습니다.');
       }
@@ -248,6 +252,20 @@ export default function LeaderboardSection() {
             </button>
           </div>
         </div>
+        
+        {/* 들어보기 탭: 재생목록 바로가기 콜아웃 */}
+        {activeTab === 'listen' && playlistId && (
+          <a
+            href={`https://www.youtube.com/playlist?list=${playlistId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 py-1.5 px-3 mb-2 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+          >
+            <span className="text-red-600 text-lg">▶</span>
+            <span className="text-sm font-medium text-red-700">YouTube 재생목록에서 전곡 듣기</span>
+          </a>
+        )}
+        
         <div className="space-y-2 overflow-y-auto flex-1">
           {loading ? (
             <div className="flex justify-center items-center flex-1 py-8">

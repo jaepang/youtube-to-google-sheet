@@ -187,6 +187,7 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         data: allData,
+        playlistId: process.env.YOUTUBE_PLAYLIST_ID || null,
       });
     } catch (sheetError: unknown) {
       console.error('구글 시트 API 에러:', sheetError);
