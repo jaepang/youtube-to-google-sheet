@@ -55,6 +55,7 @@ export default function LeaderboardSection() {
   const [ratingLoading, setRatingLoading] = useState(false);
   const [ratingChanged, setRatingChanged] = useState(false);
   const [activeTab, setActiveTab] = useState<'popular' | 'listen'>('popular');
+  const [refreshing, setRefreshing] = useState(false);
 
   // 들어보기 탭: 미평가 곡 우선 정렬
   const sortedData = useMemo(() => {
@@ -111,6 +112,12 @@ export default function LeaderboardSection() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchLeaderboard();
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -177,17 +184,6 @@ export default function LeaderboardSection() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm p-6 mt-4 flex-1 flex flex-col">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">🏆 리더보드</h2>
-        <div className="flex justify-center items-center flex-1">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="bg-white rounded-2xl shadow-sm p-6 mt-4 flex-1 flex flex-col">
@@ -199,28 +195,39 @@ export default function LeaderboardSection() {
     );
   }
 
-  if (data.length === 0) {
-    return (
-      <div className="bg-white rounded-2xl shadow-sm p-6 mt-4 flex-1 flex flex-col">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">🏆 리더보드</h2>
-        <p className="text-gray-500 text-center flex-1 flex items-center justify-center">
-          리더보드 데이터가 없습니다.
-        </p>
-      </div>
-    );
-  }
-
   const embedUrl = selectedItem ? getYoutubeEmbedUrl(selectedItem.youtubeUrl) : null;
 
   return (
     <>
       <div className="bg-white rounded-2xl shadow-sm p-6 mt-4 flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">🏆 리더보드</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-900">🏆 리더보드</h2>
+            <button
+              onClick={handleRefresh}
+              disabled={refreshing || loading}
+              className="w-6 h-6 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg
+                className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          </div>
           <div className="flex gap-1 text-sm">
             <button
               onClick={() => setActiveTab('popular')}
-              className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+              disabled={loading}
+              className={`px-3 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                 activeTab === 'popular'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -230,7 +237,8 @@ export default function LeaderboardSection() {
             </button>
             <button
               onClick={() => setActiveTab('listen')}
-              className={`px-3 py-1 rounded-lg transition-colors cursor-pointer ${
+              disabled={loading}
+              className={`px-3 py-1 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
                 activeTab === 'listen'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -241,20 +249,29 @@ export default function LeaderboardSection() {
           </div>
         </div>
         <div className="space-y-2 overflow-y-auto flex-1">
-          {sortedData.map((item, index) => {
-            const ratingStyle = getRatingStyle(item.rating);
-            const isUnrated = !item.rating;
-            
-            return (
-              <div
-                key={`${item.sheetName}-${item.originalRow}`}
-                onClick={() => handleItemClick(item)}
-                className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
-                  isUnrated 
-                    ? 'bg-amber-50 hover:bg-amber-100 border border-amber-200' 
-                    : 'bg-gray-50 hover:bg-gray-100'
-                }`}
-              >
+          {loading ? (
+            <div className="flex justify-center items-center flex-1 py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            </div>
+          ) : sortedData.length === 0 ? (
+            <p className="text-gray-500 text-center flex-1 flex items-center justify-center py-8">
+              리더보드 데이터가 없습니다.
+            </p>
+          ) : (
+            sortedData.map((item, index) => {
+              const ratingStyle = getRatingStyle(item.rating);
+              const isUnrated = !item.rating;
+              
+              return (
+                <div
+                  key={`${item.sheetName}-${item.originalRow}`}
+                  onClick={() => handleItemClick(item)}
+                  className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer ${
+                    isUnrated 
+                      ? 'bg-amber-50 hover:bg-amber-100 border border-amber-200' 
+                      : 'bg-gray-50 hover:bg-gray-100'
+                  }`}
+                >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">
                     {item.title || '(제목 없음)'}
@@ -263,14 +280,15 @@ export default function LeaderboardSection() {
                     {item.artist || '(아티스트 없음)'}
                   </p>
                 </div>
-                {ratingStyle && (
-                  <span className={`flex-shrink-0 px-2 py-1 rounded text-xs font-medium ${ratingStyle.bgClass} ${ratingStyle.textClass}`}>
-                    {item.rating}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+                  {ratingStyle && (
+                    <span className={`flex-shrink-0 px-2 py-1 rounded text-xs font-medium ${ratingStyle.bgClass} ${ratingStyle.textClass}`}>
+                      {item.rating}
+                    </span>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
