@@ -55,27 +55,37 @@ export async function GET() {
         });
       }
 
-      // 모든 Leaderboard 시트에서 C:D 컬럼 데이터 수집
-      const allData: { artist: string; title: string; sheetName: string }[] = [];
+      // 모든 Leaderboard 시트에서 C:E 컬럼 데이터 수집 (하이퍼링크 포함)
+      const allData: { artist: string; title: string; youtubeUrl: string; sheetName: string }[] = [];
 
       for (const sheet of leaderboardSheets) {
         const sheetTitle = sheet.properties?.title;
         if (!sheetTitle) continue;
 
-        const response = await sheetsClient.spreadsheets.values.get({
+        // hyperlink 정보를 가져오기 위해 spreadsheets.get 사용
+        const response = await sheetsClient.spreadsheets.get({
           spreadsheetId: process.env.SPREADSHEET_ID,
-          range: `${sheetTitle}!C:D`,
+          ranges: [`${sheetTitle}!C:E`],
+          fields: 'sheets.data.rowData.values(formattedValue,hyperlink)',
         });
 
-        const rows = response.data.values || [];
+        const rowData = response.data.sheets?.[0]?.data?.[0]?.rowData || [];
         
         // 첫 번째 행은 헤더일 수 있으므로 스킵하고 데이터 추출
-        for (let i = 1; i < rows.length; i++) {
-          const row = rows[i];
-          if (row[0] || row[1]) {
+        for (let i = 1; i < rowData.length; i++) {
+          const row = rowData[i];
+          const values = row.values || [];
+          
+          const artist = values[0]?.formattedValue || '';
+          const title = values[1]?.formattedValue || '';
+          // E 컬럼(index 2)의 하이퍼링크 URL 추출
+          const youtubeUrl = values[2]?.hyperlink || '';
+
+          if (artist || title) {
             allData.push({
-              artist: row[0] || '',
-              title: row[1] || '',
+              artist,
+              title,
+              youtubeUrl,
               sheetName: sheetTitle,
             });
           }
