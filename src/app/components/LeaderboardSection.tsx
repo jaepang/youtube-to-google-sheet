@@ -243,7 +243,7 @@ export default function LeaderboardSection() {
       {/* YouTube 임베드 모달 */}
       {selectedItem && (
         <div 
-          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 cursor-pointer"
           onClick={closeModal}
         >
           <div 
@@ -257,7 +257,7 @@ export default function LeaderboardSection() {
               </div>
               <button
                 onClick={closeModal}
-                className="ml-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                className="ml-4 p-2 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
               >
                 <span className="text-xl text-gray-500">✕</span>
               </button>
@@ -285,7 +285,7 @@ export default function LeaderboardSection() {
                     key={option.value}
                     onClick={() => handleRating(option.value)}
                     disabled={ratingLoading}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${option.bgClass} ${option.textClass} ${option.hoverClass} ${
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${option.bgClass} ${option.textClass} ${option.hoverClass} ${
                       selectedItem.rating === option.value 
                         ? 'ring-2 ring-offset-2 ring-blue-500' 
                         : ''

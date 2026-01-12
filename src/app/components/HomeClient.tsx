@@ -160,7 +160,7 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
             {session ? (
               <button
                 onClick={() => signOut()}
-                className="text-sm text-gray-600 hover:text-gray-900"
+                className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 로그아웃
               </button>
@@ -170,7 +170,7 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
           {!session ? (
             <button
               onClick={() => signIn('google')}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
             >
               Google 계정으로 로그인
             </button>
@@ -208,7 +208,7 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? '정보 가져오는 중...' : '정보 가져오기'}
               </button>
