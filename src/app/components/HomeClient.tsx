@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FaYoutube } from 'react-icons/fa';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import EditModal from './EditModal';
+import LeaderboardSection from './LeaderboardSection';
 
 interface Props {
   spreadsheetUrl: string;
@@ -148,8 +149,8 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto p-6">
+    <main className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="max-w-md mx-auto p-6 flex flex-col flex-1 w-full min-h-0">
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -159,7 +160,7 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
             {session ? (
               <button
                 onClick={() => signOut()}
-                className="text-sm text-gray-600 hover:text-gray-900"
+                className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
               >
                 로그아웃
               </button>
@@ -169,7 +170,7 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
           {!session ? (
             <button
               onClick={() => signIn('google')}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
             >
               Google 계정으로 로그인
             </button>
@@ -207,13 +208,18 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {loading ? '정보 가져오는 중...' : '정보 가져오기'}
               </button>
             </form>
           )}
         </div>
+
+        {/* 리더보드 섹션 - 로그인 시에만 표시 */}
+        {session && (
+          <LeaderboardSection />
+        )}
       </div>
 
       {/* 편집 모달 */}

@@ -24,7 +24,7 @@ function ErrorContent() {
         <div className="mt-6 text-center">
           <Link
             href="/"
-            className="text-blue-600 hover:text-blue-500"
+            className="text-blue-600 hover:text-blue-500 cursor-pointer"
           >
             홈으로 돌아가기
           </Link>
