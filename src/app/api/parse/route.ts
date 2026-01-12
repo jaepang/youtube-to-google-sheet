@@ -8,7 +8,18 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.accessToken) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return NextResponse.json({
+        error: '인증이 필요합니다.',
+        code: 'AUTH_REQUIRED'
+      }, { status: 401 });
+    }
+
+    // Check for token refresh errors
+    if (session.error === 'RefreshAccessTokenError' || session.error === 'NoRefreshToken') {
+      return NextResponse.json({
+        error: '인증이 만료되었습니다. 다시 로그인해주세요.',
+        code: 'TOKEN_EXPIRED'
+      }, { status: 401 });
     }
 
     const oauth2Client = new OAuth2Client(
@@ -69,6 +80,17 @@ export async function POST(request: Request) {
       });
     } catch (youtubeError: any) {
       console.error('유튜브 API 에러:', youtubeError);
+
+      // Check for authentication/authorization errors
+      const statusCode = youtubeError.code || youtubeError.response?.status;
+      if (statusCode === 401 || statusCode === 403) {
+        return NextResponse.json({
+          error: '인증이 만료되었습니다. 다시 로그인해주세요.',
+          code: 'TOKEN_EXPIRED',
+          details: youtubeError.message
+        }, { status: 401 });
+      }
+
       return NextResponse.json({
         error: `유튜브 API 에러: ${youtubeError.message || '알 수 없는 에러'}`,
         details: youtubeError.response?.data || youtubeError

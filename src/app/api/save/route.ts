@@ -25,7 +25,18 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.accessToken) {
-      return NextResponse.json({ error: '인증이 필요합니다.' }, { status: 401 });
+      return NextResponse.json({
+        error: '인증이 필요합니다.',
+        code: 'AUTH_REQUIRED'
+      }, { status: 401 });
+    }
+
+    // Check for token refresh errors
+    if (session.error === 'RefreshAccessTokenError' || session.error === 'NoRefreshToken') {
+      return NextResponse.json({
+        error: '인증이 만료되었습니다. 다시 로그인해주세요.',
+        code: 'TOKEN_EXPIRED'
+      }, { status: 401 });
     }
 
     // 로그인한 사용자의 이메일에서 아이디만 추출
@@ -150,6 +161,17 @@ export async function POST(request: Request) {
       });
     } catch (sheetError: any) {
       console.error('구글 시트 API 에러:', sheetError);
+
+      // Check for authentication/authorization errors
+      const statusCode = sheetError.code || sheetError.response?.status;
+      if (statusCode === 401 || statusCode === 403) {
+        return NextResponse.json({
+          error: '인증이 만료되었습니다. 다시 로그인해주세요.',
+          code: 'TOKEN_EXPIRED',
+          details: sheetError.message
+        }, { status: 401 });
+      }
+
       return NextResponse.json({
         error: `구글 시트 API 에러: ${sheetError.message || '알 수 없는 에러'}`,
         details: sheetError.response?.data || sheetError
