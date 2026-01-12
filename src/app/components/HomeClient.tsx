@@ -26,10 +26,26 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
 
+  // Handle token expiry errors
+  const handleAuthError = async (errorCode?: string) => {
+    if (errorCode === 'TOKEN_EXPIRED' || errorCode === 'AUTH_REQUIRED') {
+      const shouldRelogin = confirm(
+        '인증이 만료되었습니다.\n다시 로그인하시겠습니까?'
+      );
+
+      if (shouldRelogin) {
+        await signOut({ redirect: false });
+        await signIn('google');
+      }
+      return true;
+    }
+    return false;
+  };
+
   // YouTube URL에서 정보 가져오기
   const handleFetch = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!session) {
       await signIn('google');
       return;
@@ -48,8 +64,12 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
+        // Handle token expiry
+        if (await handleAuthError(data.code)) {
+          return;
+        }
         throw new Error(data.error || '알 수 없는 오류가 발생했습니다.');
       }
 
@@ -93,8 +113,14 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
+        // Handle token expiry
+        if (await handleAuthError(data.code)) {
+          setIsModalOpen(false);
+          setParsedData(null);
+          return;
+        }
         throw new Error(data.error || '알 수 없는 오류가 발생했습니다.');
       }
 
