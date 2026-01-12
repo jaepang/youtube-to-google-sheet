@@ -53,6 +53,7 @@ export default function LeaderboardSection() {
   const [error, setError] = useState('');
   const [selectedItem, setSelectedItem] = useState<LeaderboardItem | null>(null);
   const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingChanged, setRatingChanged] = useState(false);
 
   const handleAuthError = async (errorCode?: string) => {
     if (errorCode === 'TOKEN_EXPIRED' || errorCode === 'AUTH_REQUIRED') {
@@ -108,6 +109,11 @@ export default function LeaderboardSection() {
   };
 
   const closeModal = () => {
+    // 평가가 변경됐으면 리더보드 새로고침
+    if (ratingChanged) {
+      setRatingChanged(false);
+      fetchLeaderboard();
+    }
     setSelectedItem(null);
   };
 
@@ -147,6 +153,8 @@ export default function LeaderboardSection() {
         ));
         // 선택된 항목도 업데이트
         setSelectedItem(prev => prev ? { ...prev, rating } : null);
+        // 평가 변경 플래그 설정
+        setRatingChanged(true);
       }
     } catch (err) {
       console.error('평가 에러:', err);
