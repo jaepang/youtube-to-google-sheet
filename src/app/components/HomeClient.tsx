@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { FaYoutube } from 'react-icons/fa';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import EditModal from './EditModal';
+import LeaderboardSection from './LeaderboardSection';
 
 interface Props {
   spreadsheetUrl: string;
@@ -148,8 +149,8 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="max-w-md mx-auto p-6">
+    <main className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+      <div className="max-w-md mx-auto p-6 flex flex-col flex-1 w-full min-h-0">
         <div className="bg-white rounded-2xl shadow-sm p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -214,6 +215,11 @@ export default function HomeClient({ spreadsheetUrl }: Props) {
             </form>
           )}
         </div>
+
+        {/* 리더보드 섹션 - 로그인 시에만 표시 */}
+        {session && (
+          <LeaderboardSection />
+        )}
       </div>
 
       {/* 편집 모달 */}
