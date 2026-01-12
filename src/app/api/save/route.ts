@@ -3,6 +3,7 @@ import { sheets } from '@googleapis/sheets';
 import { getServerSession } from 'next-auth';
 import { OAuth2Client } from 'google-auth-library';
 import { authOptions } from '../auth/auth.config';
+import { syncPlaylist } from '../sync-playlist/sync';
 
 // API 키 확인
 if (!process.env.SPREADSHEET_ID) {
@@ -150,13 +151,27 @@ export async function POST(request: Request) {
 
       console.log('구글 시트 API 응답:', JSON.stringify(sheetResponse.data, null, 2));
 
+      // 재생목록 동기화 (실패해도 시트 저장은 성공으로 처리)
+      let playlistSyncResult = null;
+      try {
+        playlistSyncResult = await syncPlaylist(session.accessToken);
+        if (playlistSyncResult.success) {
+          console.log('재생목록 동기화 성공:', playlistSyncResult);
+        } else {
+          console.warn('재생목록 동기화 실패:', playlistSyncResult.error);
+        }
+      } catch (syncError) {
+        console.warn('재생목록 동기화 에러:', syncError);
+      }
+
       return NextResponse.json({
         success: true,
         data: {
           title,
           artist,
           url,
-          userName
+          userName,
+          playlistSync: playlistSyncResult?.success ? playlistSyncResult : null,
         },
       });
     } catch (sheetError: any) {
