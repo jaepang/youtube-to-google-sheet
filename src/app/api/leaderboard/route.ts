@@ -17,12 +17,12 @@ function getEmailToNameMapping(): Record<string, string> {
   }
 }
 
-// 컬럼 인덱스 상수 (C부터 시작하므로 C=0)
-const COL_ARTIST = 0;      // C
-const COL_TITLE = 1;       // D
-const COL_YOUTUBE = 2;     // E
-const COL_RATING_START = 19; // V (V는 22번째 컬럼, C는 3번째, 22-3=19)
-const COL_ORIGINAL_ROW = 28; // AE (AE는 31번째 컬럼, 31-3=28)
+// 컬럼 인덱스 상수 (B부터 시작하므로 B=0)
+const COL_ARTIST = 0;      // B
+const COL_TITLE = 1;       // C
+const COL_YOUTUBE = 2;     // D
+const COL_RATING_START = 19; // U (U는 21번째 컬럼, B는 2번째, 21-2=19)
+const COL_ORIGINAL_ROW = 28; // AD (AD는 30번째 컬럼, 30-2=28)
 
 // HYPERLINK 수식에서 URL 추출
 function extractUrlFromHyperlink(cellData: { hyperlink?: string | null; formula?: string | null; formattedValue?: string | null }): string {
@@ -106,11 +106,11 @@ export async function GET() {
         });
       }
 
-      // 모든 Leaderboard 시트에서 C:AE 컬럼 데이터 수집
-      const allData: { 
-        artist: string; 
-        title: string; 
-        youtubeUrl: string; 
+      // 모든 Leaderboard 시트에서 B:AD 컬럼 데이터 수집
+      const allData: {
+        artist: string;
+        title: string;
+        youtubeUrl: string;
         rating: string;
         originalRow: number;
         sheetName: string;
@@ -123,7 +123,7 @@ export async function GET() {
         // formattedValue + userEnteredValue(수식) + hyperlink 가져오기
         const response = await sheetsClient.spreadsheets.get({
           spreadsheetId: process.env.SPREADSHEET_ID,
-          ranges: [`${sheetTitle}!C:AE`],
+          ranges: [`${sheetTitle}!B:AD`],
           fields: 'sheets.data.rowData.values(formattedValue,hyperlink,userEnteredValue)',
         });
 
@@ -149,12 +149,12 @@ export async function GET() {
           
           const artist = values[COL_ARTIST]?.formattedValue || '';
           const title = values[COL_TITLE]?.formattedValue || '';
-          
-          // E 컬럼에서 YouTube URL 추출
+
+          // D 컬럼에서 YouTube URL 추출
           const youtubeCell = values[COL_YOUTUBE];
           // 디버깅
           if (i === 1) {
-            console.log('E컬럼 전체:', JSON.stringify(youtubeCell, null, 2));
+            console.log('D컬럼 전체:', JSON.stringify(youtubeCell, null, 2));
           }
           const youtubeUrl = extractUrlFromHyperlink({
             hyperlink: youtubeCell?.hyperlink,
@@ -167,7 +167,7 @@ export async function GET() {
             ? (values[userColumnIndex]?.formattedValue || '') 
             : '';
           
-          // 원본 행 번호 (AE 컬럼)
+          // 원본 행 번호 (AD 컬럼)
           const originalRowStr = values[COL_ORIGINAL_ROW]?.formattedValue || '';
           const originalRow = parseInt(originalRowStr, 10) || 0;
 
