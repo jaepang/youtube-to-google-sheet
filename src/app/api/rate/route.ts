@@ -83,7 +83,7 @@ export async function POST(request: Request) {
       // 선곡 시트의 1행에서 사용자 컬럼 찾기
       const headerResponse = await sheetsClient.spreadsheets.values.get({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: '선곡!V1:ZZ1', // V부터 충분히 넓은 범위
+        range: '선곡!U1:ZY1', // U부터 충분히 넓은 범위
       });
 
       const headerRow = headerResponse.data.values?.[0] || [];
@@ -97,13 +97,13 @@ export async function POST(request: Request) {
       }
 
       if (userColumnOffset === -1) {
-        return NextResponse.json({ 
-          error: `사용자 컬럼을 찾을 수 없습니다: ${userName}` 
+        return NextResponse.json({
+          error: `사용자 컬럼을 찾을 수 없습니다: ${userName}`
         }, { status: 404 });
       }
 
-      // V는 22번째 컬럼 (1-indexed), 0-indexed로는 21
-      const userColumnIndex = 21 + userColumnOffset; // V(21) + offset
+      // U는 21번째 컬럼 (1-indexed), 0-indexed로는 20
+      const userColumnIndex = 20 + userColumnOffset; // U(20) + offset
       const columnLetter = columnIndexToLetter(userColumnIndex);
 
       // 선곡 시트의 해당 행, 해당 컬럼에 평가 저장

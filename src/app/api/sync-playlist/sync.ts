@@ -50,10 +50,10 @@ export async function syncPlaylist(accessToken: string): Promise<SyncResult> {
   });
 
   try {
-    // 1. 선곡 시트에서 E 컬럼(YouTube URL) 전체 조회
+    // 1. 선곡 시트에서 D 컬럼(YouTube URL) 전체 조회
     const sheetResponse = await sheetsClient.spreadsheets.get({
       spreadsheetId: process.env.SPREADSHEET_ID,
-      ranges: ['선곡!E:E'],
+      ranges: ['선곡!D:D'],
       fields: 'sheets.data.rowData.values(userEnteredValue)',
     });
 

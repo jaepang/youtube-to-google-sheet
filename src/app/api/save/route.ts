@@ -105,7 +105,7 @@ export async function POST(request: Request) {
         // 헤더 추가 (3행에 추가)
         await sheetsClient.spreadsheets.values.update({
           spreadsheetId: process.env.SPREADSHEET_ID,
-          range: '선곡!B3:E3',
+          range: '선곡!A3:D3',
           valueInputOption: 'RAW',
           requestBody: {
             values: [['선곡자', '아티스트', '곡명', '유튜브 링크']],
@@ -116,7 +116,7 @@ export async function POST(request: Request) {
       // 현재 시트의 모든 데이터 가져오기
       const currentData = await sheetsClient.spreadsheets.values.get({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: '선곡!B:E',  // B-E열 검사
+        range: '선곡!A:D',  // A-D열 검사
       });
 
       const values = currentData.data.values || [];
@@ -124,7 +124,7 @@ export async function POST(request: Request) {
 
       // 빈 행 찾기
       for (let i = 3; i < values.length + 1; i++) {
-        if (!values[i] || !values[i][0]) {  // B열이 비어있는 행 찾기
+        if (!values[i] || !values[i][0]) {  // A열이 비어있는 행 찾기
           targetRow = i + 1;  // 1-based index로 변환
           break;
         }
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
       // 특정 행에 데이터 추가
       const sheetResponse = await sheetsClient.spreadsheets.values.update({
         spreadsheetId: process.env.SPREADSHEET_ID,
-        range: `선곡!B${targetRow}:E${targetRow}`,
+        range: `선곡!A${targetRow}:D${targetRow}`,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
           values: [[
